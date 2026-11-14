@@ -60,6 +60,7 @@ export interface ProcessInfo {
   user: string;
   cpu: number;
   memory: number;
+  virtualMemory?: number;
   status: string;
   startedAt: number;
   readRate: number;
@@ -75,24 +76,28 @@ export interface Snapshot {
   networks: NetworkInfo[];
   temperatures: Temperature[];
   processes: ProcessInfo[];
+  gpus?: GpuInfo[];
+  battery?: BatteryInfo | null;
 }
 
-export type ServerMessage =
-  | { type: 'welcome'; protocol: number; version: string; allowKill: boolean }
-  | { type: 'snapshot'; data: Snapshot }
-  | { type: 'killResult'; pid: number; ok: boolean; message: string }
-  | { type: 'error'; message: string };
+export interface GpuInfo {
+  name: string;
+  usage: number;
+  memoryUsed: number | null;
+  memoryTotal: number | null;
+  temperature: number | null;
+}
+
+export interface BatteryInfo {
+  percent: number;
+  charging: boolean;
+  plugged: boolean;
+  remainingSecs: number | null;
+}
 
 export interface KillResult {
   ok: boolean;
   message: string;
 }
 
-export interface HostConfig {
-  id: string;
-  name: string;
-  url: string;
-  token: string;
-}
-
-export type LinkStatus = 'connecting' | 'online' | 'offline' | 'unauthorized';
+export type LinkStatus = 'connecting' | 'online' | 'offline';

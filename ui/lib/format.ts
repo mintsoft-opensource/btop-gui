@@ -39,3 +39,26 @@ export function duration(seconds: number): string {
 export function level(value: number, warn = 70, crit = 90): 'ok' | 'warn' | 'crit' {
   return value >= crit ? 'crit' : value >= warn ? 'warn' : 'ok';
 }
+
+export type TempUnit = 'C' | 'F';
+
+export function temperature(celsius: number, unit: TempUnit): string {
+  return unit === 'F' ? `${Math.round(celsius * 1.8 + 32)}°F` : `${Math.round(celsius)}°C`;
+}
+
+export function span(seconds: number): string {
+  if (seconds >= 3600) return `${+(seconds / 3600).toFixed(1)}h`;
+  if (seconds >= 60) return `${+(seconds / 60).toFixed(1)}m`;
+  return `${Math.round(seconds)}s`;
+}
+
+export function hostLabel(name: string): string {
+  return name.replace(/\.(local|lan|home|localdomain)$/i, '');
+}
+
+export function clockTime(unixSeconds: number): string {
+  if (!unixSeconds) return '—';
+  const date = new Date(unixSeconds * 1000);
+  const sameDay = date.toDateString() === new Date().toDateString();
+  return sameDay ? date.toTimeString().slice(0, 8) : `${date.toISOString().slice(0, 10)} ${date.toTimeString().slice(0, 5)}`;
+}

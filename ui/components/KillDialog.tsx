@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { bytes } from '@/lib/format';
 import type { ProcessInfo } from '@/lib/types';
+import { Dialog, button } from './ui';
 
 interface Props {
   process: ProcessInfo;
@@ -21,20 +22,17 @@ export function KillDialog({ process, host, onSignal, onCancel }: Props) {
   }, [onCancel]);
 
   return (
-    <div className="overlay" onClick={onCancel}>
-      <div className="dialog" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
-        <h3>SIGNAL PROCESS</h3>
-        <p>
-          <b>{process.name}</b> (PID {process.pid}) on <b>{host}</b>
-        </p>
-        <p className="muted">{process.user || 'unknown user'} · {bytes(process.memory)} · {process.cpu.toFixed(1)}% CPU</p>
-        <p className="cmdline">{process.command}</p>
-        <div className="actions">
-          <button onClick={onCancel}>CANCEL</button>
-          <button className="warn" autoFocus onClick={() => onSignal(false)}>TERMINATE</button>
-          <button className="crit" onClick={() => onSignal(true)}>FORCE KILL</button>
-        </div>
+    <Dialog title="END PROCESS" onClose={onCancel}>
+      <p>
+        <b>{process.name}</b> (PID {process.pid}) on <b>{host}</b>
+      </p>
+      <p className="text-muted">{process.user || 'unknown user'} · {bytes(process.memory)} · {process.cpu.toFixed(1)}% CPU</p>
+      <p className="max-h-[6em] overflow-auto text-[11px] break-all text-muted select-text">{process.command}</p>
+      <div className="mt-1.5 flex justify-end gap-2">
+        <button className={button()} onClick={onCancel}>CANCEL</button>
+        <button className={button('warn')} autoFocus onClick={() => onSignal(false)}>TERMINATE</button>
+        <button className={button('crit')} onClick={() => onSignal(true)}>FORCE KILL</button>
       </div>
-    </div>
+    </Dialog>
   );
 }

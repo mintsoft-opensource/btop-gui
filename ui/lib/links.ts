@@ -1,25 +1,25 @@
-import { pushSample, sampleOf, type Sample } from './history';
-import type { HostConfig, KillResult, LinkStatus, ServerMessage, Snapshot } from './types';
-
-export const LOCAL_ID = 'local';
-const KILL_TIMEOUT_MS = 6000;
-const MAX_BACKOFF_MS = 15000;
+import { MAX_HISTORY, pushSample, sampleOf, trackProcesses, type ProcessHistory, type Sample } from './history';
+import type { KillResult, LinkStatus, Snapshot } from './types';
 
 export interface LinkState {
   status: LinkStatus;
   error: string | null;
   snapshot: Snapshot | null;
   history: Sample[];
-  allowKill: boolean;
+  processHistory: ProcessHistory;
 }
 
-const initialState: LinkState = { status: 'connecting', error: null, snapshot: null, history: [], allowKill: false };
+const initialState: LinkState = { status: 'connecting', error: null, snapshot: null, history: [], processHistory: new Map() };
 
-export abstract class Link {
+export class LocalLink {
   private listeners = new Set<() => void>();
-  protected state: LinkState = initialState;
+  private state: LinkState = initialState;
+  private unlisten: (() => void) | null = null;
+  private closed = false;
 
-  constructor(readonly id: string, public name: string) {}
+  constructor() {
+    void this.start();
+  }
 
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
@@ -28,38 +28,33 @@ export abstract class Link {
 
   getState = () => this.state;
 
-  protected update(patch: Partial<LinkState>) {
+  private update(patch: Partial<LinkState>) {
     this.state = { ...this.state, ...patch };
     this.listeners.forEach((listener) => listener());
-  }
-
-  protected receive(snapshot: Snapshot) {
-    this.update({ snapshot, history: pushSample(this.state.history, sampleOf(snapshot)), status: 'online', error: null });
-  }
-
-  abstract kill(pid: number, force: boolean): Promise<KillResult>;
-  abstract close(): void;
-}
-
-export class LocalLink extends Link {
-  private unlisten: (() => void) | null = null;
-  private closed = false;
-
-  constructor() {
-    super(LOCAL_ID, 'localhost');
-    this.update({ allowKill: true });
-    void this.start();
   }
 
   private async start() {
     try {
       const { listen } = await import('@tauri-apps/api/event');
-      const unlisten = await listen<Snapshot>('snapshot', (event) => this.receive(event.payload));
+      const unlisten = await listen<Snapshot>('snapshot', ({ payload }) =>
+        this.update({
+          snapshot: payload,
+          history: pushSample(this.state.history, sampleOf(payload), MAX_HISTORY),
+          processHistory: trackProcesses(this.state.processHistory, payload.processes),
+          status: 'online',
+          error: null,
+        }),
+      );
       if (this.closed) unlisten();
       else this.unlisten = unlisten;
     } catch (error) {
       this.update({ status: 'offline', error: String(error) });
     }
+  }
+
+  async setInterval(ms: number): Promise<void> {
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke('set_interval', { ms });
   }
 
   async kill(pid: number, force: boolean): Promise<KillResult> {
@@ -75,84 +70,6 @@ export class LocalLink extends Link {
   close() {
     this.closed = true;
     this.unlisten?.();
-  }
-}
-
-export class RemoteLink extends Link {
-  private socket: WebSocket | null = null;
-  private retry: ReturnType<typeof setTimeout> | null = null;
-  private backoff = 1000;
-  private closed = false;
-  private pending = new Map<number, (result: KillResult) => void>();
-
-  constructor(private config: HostConfig) {
-    super(config.id, config.name);
-    this.connect();
-  }
-
-  private connect() {
-    if (this.closed) return;
-    this.update({ status: 'connecting' });
-    let socket: WebSocket;
-    try {
-      socket = new WebSocket(this.config.url);
-    } catch (error) {
-      this.update({ status: 'offline', error: String(error) });
-      return;
-    }
-    this.socket = socket;
-    socket.onopen = () => socket.send(JSON.stringify({ type: 'hello', token: this.config.token }));
-    socket.onmessage = (event) => this.handle(JSON.parse(String(event.data)) as ServerMessage);
-    socket.onclose = () => {
-      this.socket = null;
-      this.pending.forEach((resolve) => resolve({ ok: false, message: 'connection closed' }));
-      this.pending.clear();
-      if (this.closed || this.state.status === 'unauthorized') return;
-      this.update({ status: 'offline', error: this.state.error ?? 'connection lost' });
-      this.retry = setTimeout(() => this.connect(), this.backoff);
-      this.backoff = Math.min(this.backoff * 2, MAX_BACKOFF_MS);
-    };
-  }
-
-  private handle(message: ServerMessage) {
-    switch (message.type) {
-      case 'welcome':
-        this.backoff = 1000;
-        this.update({ status: 'online', error: null, allowKill: message.allowKill });
-        break;
-      case 'snapshot':
-        this.receive(message.data);
-        break;
-      case 'killResult':
-        this.pending.get(message.pid)?.({ ok: message.ok, message: message.message });
-        this.pending.delete(message.pid);
-        break;
-      case 'error':
-        this.update({ status: message.message === 'unauthorized' ? 'unauthorized' : this.state.status, error: message.message });
-        break;
-    }
-  }
-
-  kill(pid: number, force: boolean): Promise<KillResult> {
-    const socket = this.socket;
-    if (!socket || socket.readyState !== WebSocket.OPEN) return Promise.resolve({ ok: false, message: 'not connected' });
-    return new Promise((resolve) => {
-      const timer = setTimeout(() => {
-        this.pending.delete(pid);
-        resolve({ ok: false, message: 'no response from agent' });
-      }, KILL_TIMEOUT_MS);
-      this.pending.set(pid, (result) => {
-        clearTimeout(timer);
-        resolve(result);
-      });
-      socket.send(JSON.stringify({ type: 'kill', pid, force }));
-    });
-  }
-
-  close() {
-    this.closed = true;
-    if (this.retry) clearTimeout(this.retry);
-    this.socket?.close();
   }
 }
 
