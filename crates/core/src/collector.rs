@@ -6,6 +6,7 @@ use sysinfo::{
     System, UpdateKind, Users,
 };
 
+use crate::hardware::Hardware;
 use crate::snapshot::*;
 
 const COMMAND_LIMIT: usize = 300;
@@ -19,6 +20,7 @@ pub struct Collector {
     networks: Networks,
     components: Components,
     users: Users,
+    hardware: Hardware,
     last: Instant,
     ticks: u64,
 }
@@ -43,6 +45,7 @@ impl Collector {
             networks: Networks::new_with_refreshed_list(),
             components: Components::new_with_refreshed_list(),
             users: Users::new_with_refreshed_list(),
+            hardware: Hardware::default(),
             last: Instant::now(),
             ticks: 0,
         }
@@ -92,6 +95,8 @@ impl Collector {
             networks: self.networks(seconds),
             temperatures,
             processes,
+            gpus: self.hardware.gpus(),
+            battery: self.hardware.battery(self.ticks),
         }
     }
 
@@ -200,6 +205,7 @@ impl Collector {
                         .unwrap_or_default(),
                     cpu: process.cpu_usage(),
                     memory: process.memory(),
+                    virtual_memory: process.virtual_memory(),
                     status: process.status().to_string(),
                     started_at: process.start_time(),
                     read_rate: rate(disk.read_bytes, seconds),

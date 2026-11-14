@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Main window: receive snapshots and signal local processes",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "core:window:allow-start-dragging"]
 }

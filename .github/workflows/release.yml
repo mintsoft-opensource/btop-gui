@@ -59,67 +59,13 @@ jobs:
         with:
           tagName: ${{ env.TAG }}
           releaseName: btop-gui ${{ env.TAG }}
-          releaseBody: See the assets below for desktop installers and agent binaries.
+          releaseBody: See the assets below for desktop installers.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
 
-  agent:
-    needs: app
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-22.04
-            target: x86_64-unknown-linux-musl
-          - os: ubuntu-24.04-arm
-            target: aarch64-unknown-linux-musl
-          - os: macos-latest
-            target: aarch64-apple-darwin
-          - os: macos-latest
-            target: x86_64-apple-darwin
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ env.TAG }}
-      - name: Install musl tools
-        if: contains(matrix.target, 'musl')
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.target }}
-      - run: cargo build --release --locked -p btop-gui-agent --target ${{ matrix.target }}
-      - name: Package (unix)
-        if: runner.os != 'Windows'
-        run: |
-          name="btop-gui-agent-${TAG}-${{ matrix.target }}"
-          mkdir "$name"
-          cp "target/${{ matrix.target }}/release/btop-gui-agent" LICENSE deploy/btop-gui-agent.service "$name/"
-          tar czf "$name.tar.gz" "$name"
-          echo "ASSET=$name.tar.gz" >> "$GITHUB_ENV"
-      - name: Package (windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $name = "btop-gui-agent-$env:TAG-${{ matrix.target }}"
-          New-Item -ItemType Directory $name | Out-Null
-          Copy-Item "target/${{ matrix.target }}/release/btop-gui-agent.exe", LICENSE $name
-          Compress-Archive -Path $name -DestinationPath "$name.zip"
-          "ASSET=$name.zip" | Out-File -FilePath $env:GITHUB_ENV -Append
-      - name: Upload to release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "$TAG" "$ASSET" --clobber
-
   publish:
-    needs: agent
+    needs: app
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

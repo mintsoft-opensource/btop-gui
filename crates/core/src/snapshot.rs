@@ -11,6 +11,10 @@ pub struct Snapshot {
     pub networks: Vec<NetworkInfo>,
     pub temperatures: Vec<Temperature>,
     pub processes: Vec<ProcessInfo>,
+    #[serde(default)]
+    pub gpus: Vec<GpuInfo>,
+    #[serde(default)]
+    pub battery: Option<BatteryInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -89,8 +93,29 @@ pub struct ProcessInfo {
     pub user: String,
     pub cpu: f32,
     pub memory: u64,
+    #[serde(default)]
+    pub virtual_memory: u64,
     pub status: String,
     pub started_at: u64,
     pub read_rate: u64,
     pub write_rate: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct GpuInfo {
+    pub name: String,
+    pub usage: f32,
+    pub memory_used: Option<u64>,
+    pub memory_total: Option<u64>,
+    pub temperature: Option<f32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct BatteryInfo {
+    pub percent: f32,
+    pub charging: bool,
+    pub plugged: bool,
+    pub remaining_secs: Option<u64>,
 }
