@@ -1,7 +1,7 @@
 {
   "name": "btop-gui-ui",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.0.1",
   "scripts": {
     "dev": "next dev -p 3456",
     "build": "next build",
