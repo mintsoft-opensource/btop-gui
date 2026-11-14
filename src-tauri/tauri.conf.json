@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "btop-gui",
+  "version": "0.1.0",
+  "identifier": "com.mintsoft.btopgui",
+  "build": {
+    "frontendDist": "../ui/out",
+    "devUrl": "http://localhost:3456",
+    "beforeDevCommand": "npm --prefix ui run dev",
+    "beforeBuildCommand": "npm --prefix ui run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "btop-gui",
+        "width": 1360,
+        "height": 860,
+        "minWidth": 720,
+        "minHeight": 520,
+        "backgroundColor": "#02040a"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost ws: wss:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Utility",
+    "shortDescription": "Cross-platform system monitor",
+    "longDescription": "A btop-inspired graphical system monitor for macOS, Windows and Linux with remote agents over WebSocket.",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "linux": { "deb": { "depends": [] } }
+  }
+}

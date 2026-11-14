@@ -1,0 +1,18 @@
+[Unit]
+Description=btop-gui agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+EnvironmentFile=/etc/btop-gui-agent.env
+ExecStart=/usr/local/bin/btop-gui-agent
+Restart=on-failure
+RestartSec=3
+DynamicUser=yes
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

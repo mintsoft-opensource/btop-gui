@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="70%">
+      <stop offset="0" stop-color="#0b1d33"/>
+      <stop offset="1" stop-color="#02040a"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1f6a99"/>
+      <stop offset="1" stop-color="#4db8ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+  <rect x="72" y="72" width="880" height="880" rx="170" fill="none" stroke="#4db8ff" stroke-opacity=".35" stroke-width="8"/>
+  <g stroke="#4db8ff" stroke-opacity=".12" stroke-width="6">
+    <line x1="160" y1="380" x2="864" y2="380"/>
+    <line x1="160" y1="520" x2="864" y2="520"/>
+    <line x1="160" y1="660" x2="864" y2="660"/>
+  </g>
+  <path d="M160 700 L260 640 L330 670 L410 470 L480 560 L560 300 L640 520 L710 450 L780 560 L864 500 L864 800 L160 800 Z" fill="#4db8ff" fill-opacity=".18"/>
+  <path d="M160 700 L260 640 L330 670 L410 470 L480 560 L560 300 L640 520 L710 450 L780 560 L864 500" fill="none" stroke="url(#beam)" stroke-width="34" stroke-linejoin="round" stroke-linecap="round"/>
+  <g fill="#4db8ff">
+    <rect x="200" y="850" width="120" height="22" rx="6" fill-opacity=".9"/>
+    <rect x="340" y="850" width="120" height="22" rx="6" fill-opacity=".6"/>
+    <rect x="480" y="850" width="120" height="22" rx="6" fill-opacity=".35"/>
+    <rect x="620" y="850" width="120" height="22" rx="6" fill="#ffb547"/>
+  </g>
+  <circle cx="560" cy="300" r="30" fill="#d3e8fa"/>
+</svg>

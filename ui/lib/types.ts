@@ -1,0 +1,98 @@
+export interface HostInfo {
+  name: string;
+  os: string;
+  kernel: string;
+  arch: string;
+  uptime: number;
+  processCount: number;
+}
+
+export interface CpuInfo {
+  brand: string;
+  usage: number;
+  cores: number[];
+  frequencyMhz: number;
+  physicalCores: number | null;
+  load: [number, number, number] | null;
+  temperature: number | null;
+}
+
+export interface MemoryInfo {
+  total: number;
+  used: number;
+  available: number;
+  free: number;
+  swapTotal: number;
+  swapUsed: number;
+}
+
+export interface DiskInfo {
+  name: string;
+  mount: string;
+  fileSystem: string;
+  total: number;
+  available: number;
+  readRate: number;
+  writeRate: number;
+  removable: boolean;
+}
+
+export interface NetworkInfo {
+  name: string;
+  rxRate: number;
+  txRate: number;
+  rxTotal: number;
+  txTotal: number;
+  addresses: string[];
+}
+
+export interface Temperature {
+  label: string;
+  celsius: number;
+  critical: number | null;
+}
+
+export interface ProcessInfo {
+  pid: number;
+  parent: number | null;
+  name: string;
+  command: string;
+  user: string;
+  cpu: number;
+  memory: number;
+  status: string;
+  startedAt: number;
+  readRate: number;
+  writeRate: number;
+}
+
+export interface Snapshot {
+  at: number;
+  host: HostInfo;
+  cpu: CpuInfo;
+  memory: MemoryInfo;
+  disks: DiskInfo[];
+  networks: NetworkInfo[];
+  temperatures: Temperature[];
+  processes: ProcessInfo[];
+}
+
+export type ServerMessage =
+  | { type: 'welcome'; protocol: number; version: string; allowKill: boolean }
+  | { type: 'snapshot'; data: Snapshot }
+  | { type: 'killResult'; pid: number; ok: boolean; message: string }
+  | { type: 'error'; message: string };
+
+export interface KillResult {
+  ok: boolean;
+  message: string;
+}
+
+export interface HostConfig {
+  id: string;
+  name: string;
+  url: string;
+  token: string;
+}
+
+export type LinkStatus = 'connecting' | 'online' | 'offline' | 'unauthorized';
